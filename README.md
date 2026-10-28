@@ -28,6 +28,12 @@ Windows 托盘版的 Home Assistant 控制器。点一下托盘（或 MyDockFind
 - Node.js 18 以上
 - Home Assistant 2023.11 或更新版本（色温控制依赖 `color_temp_kelvin`）
 
+## 下载
+
+到 [Releases](https://github.com/YonimoC/HA-Ctrl-for-Windows/releases) 下载 `HA-Ctrl-1.0.0-beta-win-x64.zip`，解压后运行 `HA Ctrl.exe`。这是免安装版本，程序会在系统托盘常驻。
+
+> 安装包（NSIS）暂未提供，可自行 `npm run dist` 打包。
+
 ## 开发运行
 
 ```bash

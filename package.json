@@ -3,6 +3,9 @@
   "productName": "HA Ctrl",
   "version": "1.0.0-beta",
   "description": "Home Assistant tray controller for Windows, in the spirit of the macOS Home app",
+  "author": {
+    "name": "YonimoC"
+  },
   "main": "./out/main/index.js",
   "private": true,
   "scripts": {
