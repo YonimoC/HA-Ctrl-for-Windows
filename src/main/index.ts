@@ -1,10 +1,12 @@
 import {
   app,
   BrowserWindow,
+  desktopCapturer,
   globalShortcut,
   ipcMain,
   Menu,
   nativeImage,
+  screen,
   Tray
 } from 'electron'
 import { join } from 'node:path'
@@ -66,14 +68,61 @@ function showPanel(anchor: Anchor = 'tray'): void {
   if (!panel) return
   if (anchor === 'cursor' || !tray) positionPanelAtCursor(panel)
   else positionPanelForTray(panel, tray)
-  panel.show()
-  panel.focus()
-  panel.webContents.send('panel:shown')
+
+  const reveal = (): void => {
+    if (!panel) return
+    panel.show()
+    panel.focus()
+    panel.webContents.send('panel:shown')
+  }
+
+  // Grab what is behind the panel while it is still hidden, so the page can
+  // blur it itself — Windows cannot blur a transparent window natively.
+  if (loadUiSettings().theme === 'macos') void captureBackdrop().then(reveal, reveal)
+  else reveal()
+}
+
+/** Screenshot of the desktop behind the panel, used as the frosted-glass source. */
+async function captureBackdrop(): Promise<void> {
+  if (!panel || panel.isDestroyed()) return
+  try {
+    const bounds = panel.getBounds()
+    const display = screen.getDisplayMatching(bounds)
+    const sources = await desktopCapturer.getSources({
+      types: ['screen'],
+      thumbnailSize: {
+        width: Math.round(display.size.width * display.scaleFactor),
+        height: Math.round(display.size.height * display.scaleFactor)
+      }
+    })
+    const source =
+      sources.find((entry) => String(entry.display_id) === String(display.id)) ?? sources[0]
+    if (!source) return
+
+    const image = source.thumbnail
+    const size = image.getSize()
+    const scale = size.width / display.size.width
+    const pad = 48
+    const x = Math.max(0, Math.round((bounds.x - display.bounds.x - pad) * scale))
+    const y = Math.max(0, Math.round((bounds.y - display.bounds.y - pad) * scale))
+    const width = Math.min(size.width - x, Math.round((bounds.width + pad * 2) * scale))
+    const height = Math.min(size.height - y, Math.round((bounds.height + pad * 2) * scale))
+    if (width <= 0 || height <= 0) return
+
+    const crop = image.crop({ x, y, width, height })
+    panel.webContents.send(
+      'panel:backdrop',
+      `data:image/jpeg;base64,${crop.toJPEG(80).toString('base64')}`
+    )
+  } catch {
+    /* the panel simply renders without a backdrop */
+  }
 }
 
 function hidePanel(): void {
   if (!panel) return
   lastHiddenAt = Date.now()
+  pinned = false
   panel.hide()
 }
 
@@ -183,11 +232,14 @@ function registerIpc(): void {
   ipcMain.on('window:height', (_event, height: number) => {
     if (!panel) return
     resizePanelWindow(panel, height)
+    revealWhenMeasured()
   })
 }
 
-function buildPanel(): void {
-  panel = createPanelWindow(loadUiSettings().theme)
+function buildPanel(initialHeight?: number): void {
+  // A rebuilt window starts unpinned; the old renderer's cleanup never runs.
+  pinned = false
+  panel = createPanelWindow(loadUiSettings().theme, initialHeight)
   panel.on('blur', () => {
     if (pinned) return
     if (panel?.webContents.isDevToolsOpened()) return
@@ -201,16 +253,51 @@ function buildPanel(): void {
   })
 }
 
+let pendingReveal = false
+
+/** Shows a rebuilt panel as soon as the renderer reports its real content height. */
+function revealWhenMeasured(): void {
+  if (!pendingReveal || !panel) return
+  pendingReveal = false
+  const target = panel
+  const reveal = (): void => {
+    if (target.isDestroyed()) return
+    repositionPanel(target)
+    target.show()
+    target.focus()
+  }
+  if (loadUiSettings().theme === 'macos') void captureBackdrop().then(reveal, reveal)
+  else reveal()
+}
+
 /** Window chrome (acrylic vs. transparent) is set at creation, so a theme switch rebuilds it. */
 function rebuildPanel(): void {
   if (!panel) return
   const wasVisible = panel.isVisible()
+  const [, previousHeight] = panel.getSize()
   panel.removeAllListeners()
   panel.destroy()
-  buildPanel()
-  if (wasVisible && panel) {
-    repositionPanel(panel)
-    panel.show()
+
+  // Reuse the old height and only show once the renderer has measured its
+  // content, so the panel does not flash short and then stretch.
+  buildPanel(previousHeight)
+  if (!panel) return
+
+  const next = panel
+  repositionPanel(next)
+
+  if (wasVisible) {
+    pendingReveal = true
+    setTimeout(() => {
+      if (pendingReveal) {
+        pendingReveal = false
+        if (!next.isDestroyed()) {
+          repositionPanel(next)
+          next.show()
+          next.focus()
+        }
+      }
+    }, 1500)
   }
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useHome } from './home'
 import { Dashboard } from './components/Dashboard'
 import { SettingsView } from './components/SettingsView'
@@ -13,6 +13,8 @@ export default function App(): ReactNode {
   const [editMode, setEditMode] = useState(false)
   const [addArea, setAddArea] = useState<string | null>(null)
   const [panelKey, setPanelKey] = useState(0)
+  const [backdrop, setBackdrop] = useState<string | null>(null)
+  const [backdropLum, setBackdropLum] = useState<number | null>(null)
 
   // Reopening the panel always lands on the dashboard, like a fresh popover.
   useEffect(
@@ -25,11 +27,42 @@ export default function App(): ReactNode {
     []
   )
 
+  useEffect(
+    () =>
+      window.api.onBackdrop((dataUrl) => {
+        setBackdrop(dataUrl)
+        const image = new Image()
+        image.onload = () => {
+          const canvas = document.createElement('canvas')
+          canvas.width = 1
+          canvas.height = 1
+          const context = canvas.getContext('2d')
+          if (!context) return
+          context.drawImage(image, 0, 0, 1, 1)
+          const [r, g, b] = context.getImageData(0, 0, 1, 1).data
+          setBackdropLum((0.2126 * r + 0.7152 * g + 0.0722 * b) / 255)
+        }
+        image.src = dataUrl
+      }),
+    []
+  )
+
+  // Thicken the panel when the glass sits over a backdrop of the opposite tone,
+  // the way macOS vibrancy keeps text legible on any wallpaper.
+  const darkUi = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const lum = backdropLum ?? (darkUi ? 0.15 : 0.85)
+  const bgAlpha = darkUi
+    ? Math.min(0.96, Math.max(0.9, 0.9 + (lum - 0.45) * 0.4))
+    : Math.min(0.96, Math.max(0.88, 0.88 + (0.5 - lum) * 0.5))
+
   const headerRef = useRef<HTMLElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
   const lastHeight = useRef(0)
 
   useEffect(() => {
+    // Wait for the first snapshot: sizing an empty panel would shrink the
+    // window and then stretch it once data arrives.
+    if (!home.loaded) return
     const inner = innerRef.current
     if (!inner) return
 
@@ -58,7 +91,7 @@ export default function App(): ReactNode {
       observer.disconnect()
       if (timer) window.clearTimeout(timer)
     }
-  }, [])
+  }, [home.loaded])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -83,7 +116,17 @@ export default function App(): ReactNode {
 
   return (
     <div className="shell">
-      <div className={`panel theme-${home.ui.theme}`}>
+      <div
+        className={`panel theme-${home.ui.theme}`}
+        style={{ '--bg-alpha': bgAlpha } as CSSProperties}
+      >
+        {home.ui.theme === 'macos' && backdrop && (
+          <div
+            className="panel__backdrop"
+            style={{ backgroundImage: `url(${backdrop})` }}
+            aria-hidden="true"
+          />
+        )}
         <header className="header" ref={headerRef}>
           {view === 'home' ? (
             <>

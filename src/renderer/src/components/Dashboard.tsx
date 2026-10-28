@@ -3,6 +3,7 @@ import { useHome } from '../home'
 import { buildGroups } from '../lib/grouping'
 import { AreaSection } from './AreaSection'
 import { MacDetail } from './MacDetail'
+import { TileEditor } from './TileEditor'
 import { Icon } from './Icons'
 
 interface Props {
@@ -14,20 +15,24 @@ interface Props {
 export function Dashboard({ editMode, onOpenSettings, onAdd }: Props): ReactNode {
   const home = useHome()
   const [detailId, setDetailId] = useState<string | null>(null)
+  const [editorId, setEditorId] = useState<string | null>(null)
 
   const groups = useMemo(
     () => buildGroups(home.meta, home.entities, home.areas, home.dashboard, home.overview),
     [home.meta, home.entities, home.areas, home.dashboard, home.overview]
   )
 
-  const detailItem = useMemo(() => {
-    if (!detailId) return null
+  const findItem = (id: string | null): (typeof groups)[number]['items'][number] | null => {
+    if (!id) return null
     for (const group of groups) {
-      const found = group.items.find((item) => item.meta.entity_id === detailId)
+      const found = group.items.find((item) => item.meta.entity_id === id)
       if (found) return found
     }
     return null
-  }, [detailId, groups])
+  }
+
+  const detailItem = useMemo(() => findItem(detailId), [detailId, groups])
+  const editorItem = useMemo(() => findItem(editorId), [editorId, groups])
 
   const remove = (entityId: string): void => {
     const order: Record<string, string[]> = {}
@@ -35,6 +40,7 @@ export function Dashboard({ editMode, onOpenSettings, onAdd }: Props): ReactNode
       order[key] = ids.filter((id) => id !== entityId)
     }
     home.updateDashboard({
+      ...home.dashboard,
       hidden: [...new Set([...home.dashboard.hidden, entityId])],
       order
     })
@@ -92,6 +98,7 @@ export function Dashboard({ editMode, onOpenSettings, onAdd }: Props): ReactNode
   return (
     <>
       <div className={`dashboard ${editMode ? 'is-editing' : ''}`}>
+        {editMode && <div className="edit-hint">点击磁贴可编辑或移除，拖动可排序</div>}
         {home.error && home.status === 'connected' && <div className="banner">{home.error}</div>}
         {groups.map((group) => (
           <AreaSection
@@ -104,6 +111,7 @@ export function Dashboard({ editMode, onOpenSettings, onAdd }: Props): ReactNode
             onReorder={reorder}
             onAdd={onAdd}
             onOpen={setDetailId}
+            onEdit={setEditorId}
           />
         ))}
       </div>
@@ -112,6 +120,15 @@ export function Dashboard({ editMode, onOpenSettings, onAdd }: Props): ReactNode
           item={detailItem}
           callService={home.callService}
           onClose={() => setDetailId(null)}
+        />
+      )}
+      {editorItem && editMode && (
+        <TileEditor
+          item={editorItem}
+          areas={home.areas}
+          dashboard={home.dashboard}
+          onSave={home.updateDashboard}
+          onClose={() => setEditorId(null)}
         />
       )}
     </>

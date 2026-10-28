@@ -90,14 +90,18 @@ export function loadDashboard(): DashboardConfig {
   const cfg = readJson<DashboardConfig>(filePath('dashboard.json'), defaultDashboard())
   return {
     hidden: Array.isArray(cfg.hidden) ? cfg.hidden : [],
-    order: cfg.order && typeof cfg.order === 'object' ? cfg.order : {}
+    order: cfg.order && typeof cfg.order === 'object' ? cfg.order : {},
+    names: cfg.names && typeof cfg.names === 'object' ? cfg.names : {},
+    areas: cfg.areas && typeof cfg.areas === 'object' ? cfg.areas : {}
   }
 }
 
 export function saveDashboard(config: DashboardConfig): void {
   writeJson(filePath('dashboard.json'), {
     hidden: config.hidden ?? [],
-    order: config.order ?? {}
+    order: config.order ?? {},
+    names: config.names ?? {},
+    areas: config.areas ?? {}
   })
 }
 

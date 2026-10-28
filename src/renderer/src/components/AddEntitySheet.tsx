@@ -35,14 +35,24 @@ export function AddEntitySheet({ areaKey }: { areaKey: string | null }): ReactNo
   const add = (entityId: string): void => {
     const meta = home.meta[entityId]
     if (!meta) return
-    const key = meta.areaId ?? UNASSIGNED_KEY
+
+    // Adding from a room's "+" puts the entity in that room; otherwise it keeps
+    // whatever area Home Assistant reports.
+    const ownArea = meta.areaId ?? UNASSIGNED_KEY
+    const key = areaKey ?? ownArea
     const current = home.dashboard.order[key] ?? []
+    const areaOverrides = { ...(home.dashboard.areas ?? {}) }
+    if (areaKey && areaKey !== ownArea) areaOverrides[entityId] = areaKey
+    else delete areaOverrides[entityId]
+
     home.updateDashboard({
+      ...home.dashboard,
       hidden: home.dashboard.hidden.filter((id) => id !== entityId),
       order: {
         ...home.dashboard.order,
         [key]: current.includes(entityId) ? current : [...current, entityId]
-      }
+      },
+      areas: areaOverrides
     })
     setLastAdded(entityId)
     window.setTimeout(() => setLastAdded((id) => (id === entityId ? null : id)), 1400)

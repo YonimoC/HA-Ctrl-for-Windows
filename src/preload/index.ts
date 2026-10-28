@@ -28,6 +28,7 @@ const api: HomeApi = {
   setContentHeight: (height: number) => ipcRenderer.send('window:height', height),
   setPinned: (pinned: boolean) => ipcRenderer.send('window:pin', pinned),
   onShown: (cb) => subscribe<void>('panel:shown', cb),
+  onBackdrop: (cb) => subscribe<string>('panel:backdrop', cb),
   onReady: (cb) => subscribe<ReadyPayload>('ha:ready', cb),
   onStates: (cb) => subscribe<StateUpdatePayload>('ha:states', cb),
   onStatus: (cb) => subscribe<StatusPayload>('ha:status', cb)

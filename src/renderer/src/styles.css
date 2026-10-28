@@ -1,8 +1,8 @@
 :root {
   --bg: rgba(247, 247, 249, 0.985);
   --fg: #1c1c1e;
-  --fg-2: rgba(60, 60, 67, 0.62);
-  --fg-3: rgba(60, 60, 67, 0.38);
+  --fg-2: rgba(48, 48, 52, 0.76);
+  --fg-3: rgba(60, 60, 67, 0.46);
   --separator: rgba(60, 60, 67, 0.12);
   --border: rgba(0, 0, 0, 0.09);
   --tile: rgba(120, 120, 128, 0.1);
@@ -82,6 +82,22 @@ button {
   background: var(--bg);
   border: 0.5px solid var(--border);
   overflow: hidden;
+}
+
+/* Blurred screenshot of whatever sits behind the panel — the frosted glass. */
+.panel__backdrop {
+  position: absolute;
+  inset: -30px;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(26px) saturate(1.6) brightness(1.02);
+  pointer-events: none;
+}
+
+.panel > *:not(.panel__backdrop) {
+  position: relative;
+  z-index: 1;
 }
 
 /* ---------- header ---------- */
@@ -256,14 +272,47 @@ button {
   border-radius: 999px;
   transition: background 0.18s ease, color 0.18s ease, padding 0.18s ease,
     margin 0.18s ease, box-shadow 0.18s ease;
-}
-
-.area__header.is-stuck .area__title {
+}.area__header.is-stuck .area__title {
   margin-left: -14px;
   padding: 6px 14px;
   color: var(--fg);
   background: var(--area-header-bg);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.13), inset 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+}
+
+.area__sensors {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 2px;
+  font-size: 12px;
+  color: var(--fg-2);
+  font-variant-numeric: tabular-nums;
+  transition: opacity 0.16s ease;
+}
+
+.area__sensor {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.area__sensor svg {
+  opacity: 0.85;
+}
+
+.area__sensor--more {
+  opacity: 0.85;
+}
+
+.area__header.is-stuck .area__sensors {
+  opacity: 0;
+}
+
+.area__sensors + .area__add {
+  margin-left: 10px;
 }
 
 .area__add {
@@ -310,13 +359,14 @@ button {
   position: relative;
   flex: 1;
   min-height: 88px;
+  min-width: 0;
   padding: 9px 10px 10px;
   border-radius: 12px;
   background: var(--tile);
   color: var(--fg);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   transition: background 0.18s ease, transform 0.12s ease;
 }
 
@@ -607,13 +657,16 @@ button {
 
 /* ---------- edit mode ---------- */
 
-.tile__remove {
+/* Removal dot shared by both themes: floats above the tile corner. */
+.tile__remove,
+.mac-tile__remove {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: -11px;
+  right: -11px;
   z-index: 2;
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
   border: 0;
   border-radius: 50%;
   background: var(--danger);
@@ -621,7 +674,20 @@ button {
   display: grid;
   place-items: center;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.tile__remove:hover,
+.mac-tile__remove:hover {
+  transform: scale(1.08);
+  background: #ff453a;
+}
+
+.tile__remove:active,
+.mac-tile__remove:active {
+  transform: scale(0.94);
+  background: #d92b20;
 }
 
 .tile__grip {
@@ -990,18 +1056,18 @@ button {
    ========================================================= */
 
 .panel.theme-macos {
-  --bg: rgba(250, 250, 252, 0.46);
+  --bg: rgba(250, 250, 252, 0.76);
   --border: transparent;
   --tile: rgba(255, 255, 255, 0.42);
   --tile-hover: rgba(255, 255, 255, 0.62);
   --input-bg: rgba(255, 255, 255, 0.55);
   --separator: rgba(60, 60, 67, 0.12);
   --scroll: rgba(60, 60, 67, 0.22);
-  --mac-tile-on: rgba(255, 255, 255, 0.95);
+  --mac-tile-on: rgba(255, 255, 255, 0.84);
   --mac-tile-on-fg: #1c1c1e;
-  --mac-tile-off: rgba(120, 120, 128, 0.15);
-  --mac-tile-off-hover: rgba(120, 120, 128, 0.22);
-  --mac-tile-off-fg: rgba(40, 40, 44, 0.66);
+  --mac-tile-off: rgba(255, 255, 255, 0.4);
+  --mac-tile-off-hover: rgba(255, 255, 255, 0.5);
+  --mac-tile-off-fg: rgba(24, 24, 26, 0.9);
   --mac-tile-hairline: rgba(0, 0, 0, 0.04);
   --mac-slider-fill: #0a84ff;
   --area-header-bg: rgba(250, 250, 252, 0.92);
@@ -1013,22 +1079,22 @@ button {
   --mac-icon-sensor-on: #0a84ff;
   --mac-card-bg: rgba(250, 250, 252, 0.97);
   border: 0;
-  border-radius: 0;
-  background: var(--bg);
+  border-radius: 22px;
+  background: rgb(250 250 252 / var(--bg-alpha, 0.76));
 }
 
 @media (prefers-color-scheme: dark) {
   .panel.theme-macos {
-    --bg: rgba(26, 26, 28, 0.56);
+    background: rgb(28 28 30 / var(--bg-alpha, 0.8));
     --tile: rgba(255, 255, 255, 0.1);
     --tile-hover: rgba(255, 255, 255, 0.18);
     --input-bg: rgba(255, 255, 255, 0.1);
     --separator: rgba(255, 255, 255, 0.12);
     --scroll: rgba(255, 255, 255, 0.24);
-    --mac-tile-on: rgba(255, 255, 255, 0.9);
+    --mac-tile-on: rgba(255, 255, 255, 0.8);
     --mac-tile-on-fg: #1c1c1e;
-    --mac-tile-off: rgba(255, 255, 255, 0.07);
-    --mac-tile-off-hover: rgba(255, 255, 255, 0.12);
+    --mac-tile-off: rgba(255, 255, 255, 0.16);
+    --mac-tile-off-hover: rgba(255, 255, 255, 0.22);
     --mac-tile-off-fg: rgba(255, 255, 255, 0.66);
     --mac-tile-hairline: rgba(255, 255, 255, 0.05);
     --mac-slider-fill: #0a84ff;
@@ -1058,13 +1124,14 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
   height: 78px;
   padding: 10px 12px 10px 14px;
   border-radius: 12px;
   background: var(--mac-tile-off);
   color: var(--mac-tile-off-fg);
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: inset 0 0 0 0.5px var(--mac-tile-hairline);
   transition: background 0.16s ease, box-shadow 0.16s ease;
 }
@@ -1097,6 +1164,42 @@ button {
 
 .mac-tile.is-editing {
   cursor: grab;
+}
+
+/* Compact variant for read-only readings while editing. */
+.mac-tile.is-compact {
+  height: 54px;
+  padding: 6px 9px;
+  gap: 8px;
+  border-radius: 11px;
+}
+
+.mac-tile.is-compact > .mac-tile__icon {
+  width: 26px;
+  height: 26px;
+  margin-left: -2px;
+}
+
+.mac-tile.is-compact .mac-tile__name {
+  font-size: 12.5px;
+}
+
+.mac-tile.is-compact .mac-tile__state {
+  font-size: 11px;
+}
+
+.tiles--readings {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.mac-tile.is-editing .mac-tile__text {
+  padding-right: 10px;
+}
+
+.mac-tile.is-compact .tile__grip {
+  display: none;
 }
 
 .mac-tile.is-dragging {
@@ -1165,26 +1268,11 @@ button {
 .mac-tile__state {
   font-size: 12px;
   line-height: 1.3;
-  opacity: 0.7;
+  opacity: 0.82;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-variant-numeric: tabular-nums;
-}
-
-.mac-tile__remove {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 18px;
-  height: 18px;
-  border: 0;
-  border-radius: 50%;
-  background: var(--danger);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
 }
 
 .mac-tile .tile__grip {
@@ -1306,6 +1394,36 @@ button {
   flex-direction: column;
   gap: 14px;
   margin-top: 14px;
+}
+
+.mac-detail__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.ghost-btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 14px;
+  background: var(--tile);
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ghost-btn:hover {
+  background: var(--tile-hover);
+}
+
+.edit-hint {
+  padding: 0 4px 6px;
+  font-size: 12px;
+  color: var(--fg-3);
+  text-align: center;
 }
 
 .mac-detail__group {

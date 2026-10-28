@@ -11,8 +11,10 @@ export interface MacTileProps {
   item: EntityItem
   editMode: boolean
   dragging: boolean
+  compact?: boolean
   callService: CallService
   onOpen: (entityId: string) => void
+  onEdit: (entityId: string) => void
   onRemove: (entityId: string) => void
   onDragStart: (entityId: string) => void
   onDropOn: (entityId: string) => void
@@ -123,8 +125,10 @@ export function MacTile({
   item,
   editMode,
   dragging,
+  compact = false,
   callService,
   onOpen,
+  onEdit,
   onRemove,
   onDragStart,
   onDropOn
@@ -140,6 +144,7 @@ export function MacTile({
         'mac-tile',
         on ? 'is-on' : 'is-off',
         wide ? 'is-wide' : '',
+        compact ? 'is-compact' : '',
         editMode ? 'is-editing' : '',
         dragging ? 'is-dragging' : ''
       ]
@@ -162,12 +167,14 @@ export function MacTile({
         onDropOn(meta.entity_id)
       }}
       onClick={() => {
-        if (!editMode) onOpen(meta.entity_id)
+        if (editMode) onEdit(meta.entity_id)
+        else onOpen(meta.entity_id)
       }}
       role="button"
       tabIndex={editMode ? undefined : 0}
       onKeyDown={(event) => {
-        if (!editMode && (event.key === 'Enter' || event.key === ' ')) {
+        if (editMode) return
+        if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
           onOpen(meta.entity_id)
         }
@@ -205,7 +212,7 @@ export function MacTile({
               onRemove(meta.entity_id)
             }}
           >
-            <Icon name="minus" size={12} strokeWidth={2.6} />
+            <Icon name="minus" size={13} strokeWidth={2.8} />
           </button>
           <span className="tile__grip">
             <Icon name="drag" size={14} />

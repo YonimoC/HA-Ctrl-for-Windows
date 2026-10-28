@@ -26,6 +26,10 @@ export interface DashboardConfig {
   hidden: string[]
   /** per-area manual ordering */
   order: Record<string, string[]>
+  /** display-name overrides */
+  names?: Record<string, string>
+  /** area overrides: entity id → area id (or the unassigned key) */
+  areas?: Record<string, string>
 }
 
 export type UiTheme = 'windows' | 'macos'
@@ -93,6 +97,7 @@ export interface HomeApi {
   /** While pinned the panel stays open when it loses focus (used by settings). */
   setPinned(pinned: boolean): void
   onShown(cb: () => void): () => void
+  onBackdrop(cb: (dataUrl: string) => void): () => void
   onReady(cb: (payload: ReadyPayload) => void): () => void
   onStates(cb: (payload: StateUpdatePayload) => void): () => void
   onStatus(cb: (payload: StatusPayload) => void): () => void

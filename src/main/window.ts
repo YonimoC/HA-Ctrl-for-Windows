@@ -9,7 +9,6 @@ export const PANEL_MIN_HEIGHT = 180
 export const PANEL_MAX_HEIGHT = 470
 
 const ANCHOR_GAP = 6
-
 interface Anchor {
   point: Point
   /** Height of the clicked item (tray icon), 0 when only the cursor is known. */
@@ -19,18 +18,13 @@ interface Anchor {
 
 let anchor: Anchor | null = null
 
-export function createPanelWindow(theme: UiTheme): BrowserWindow {
-  // The macOS look uses the system acrylic material: the window stays opaque so
-  // DWM can blur the desktop behind it and round its corners. The Windows look
-  // paints its own opaque panel, which needs a transparent window instead.
-  const glass = theme === 'macos'
-
+export function createPanelWindow(theme: UiTheme, initialHeight?: number): BrowserWindow {
   const options: BrowserWindowConstructorOptions = {
     width: PANEL_WIDTH,
-    height: 460,
+    height: initialHeight ?? 460,
     show: false,
     frame: false,
-    transparent: !glass,
+    transparent: true,
     backgroundColor: '#00000000',
     // Kept resizable so setSize works without restyling the window (that flash
     // was visible). Manual resizes are blocked in the will-resize handler.
@@ -41,7 +35,7 @@ export function createPanelWindow(theme: UiTheme): BrowserWindow {
     fullscreenable: false,
     skipTaskbar: true,
     alwaysOnTop: true,
-    hasShadow: glass,
+    hasShadow: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -51,8 +45,6 @@ export function createPanelWindow(theme: UiTheme): BrowserWindow {
     }
   }
 
-  if (glass) options.backgroundMaterial = 'acrylic'
-
   const win = new BrowserWindow(options)
 
   // Chromium remembers per-origin zoom in the profile; an old experiment could
@@ -60,12 +52,6 @@ export function createPanelWindow(theme: UiTheme): BrowserWindow {
   const resetZoom = (): void => win.webContents.setZoomFactor(1)
   resetZoom()
   win.webContents.on('did-finish-load', resetZoom)
-
-  if (glass) {
-    // Belt and braces: the constructor option alone has been seen to miss.
-    win.setBackgroundMaterial('acrylic')
-    win.webContents.on('did-finish-load', () => win.setBackgroundMaterial('acrylic'))
-  }
 
   win.setAlwaysOnTop(true, 'floating')
   win.setMenuBarVisibility(false)

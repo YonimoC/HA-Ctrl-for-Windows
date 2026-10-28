@@ -12,6 +12,7 @@ export interface TileProps {
   editMode: boolean
   dragging: boolean
   callService: (call: ServiceCall) => Promise<{ ok: boolean; error?: string }>
+  onEdit: (entityId: string) => void
   onRemove: (entityId: string) => void
   onDragStart: (entityId: string) => void
   onDropOn: (entityId: string) => void
@@ -31,6 +32,7 @@ function TileFrame({
   className,
   interactive = true,
   onActivate,
+  onEdit,
   onRemove,
   onDragStart,
   onDropOn,
@@ -63,16 +65,16 @@ function TileFrame({
         onDropOn(meta.entity_id)
       }}
       onClick={() => {
-        if (!editMode) onActivate?.()
+        if (editMode) onEdit(meta.entity_id)
+        else onActivate?.()
       }}
       role={interactive && onActivate ? 'button' : undefined}
       tabIndex={interactive && onActivate && !editMode ? 0 : undefined}
       onKeyDown={(event) => {
+        if (editMode) return
         if (event.key === 'Enter' || event.key === ' ') {
-          if (!editMode) {
-            event.preventDefault()
-            onActivate?.()
-          }
+          event.preventDefault()
+          onActivate?.()
         }
       }}
     >
@@ -85,7 +87,7 @@ function TileFrame({
             onRemove(meta.entity_id)
           }}
         >
-          <Icon name="minus" size={12} strokeWidth={2.4} />
+          <Icon name="minus" size={13} strokeWidth={2.8} />
         </button>
       )}
       {children}

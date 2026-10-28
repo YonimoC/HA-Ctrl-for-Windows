@@ -2,8 +2,9 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { ServiceCall, UiTheme } from '@shared/types'
 import { Tile } from './Tiles'
 import { MacTile } from './MacTile'
-import type { GroupedArea } from '../lib/grouping'
-import { Icon } from './Icons'
+import { formatValue, type GroupedArea } from '../lib/grouping'
+import { str } from '../lib/util'
+import { Icon, iconFor } from './Icons'
 
 interface Props {
   group: GroupedArea
@@ -14,6 +15,7 @@ interface Props {
   onReorder: (areaKey: string, ids: string[]) => void
   onAdd: (areaKey: string) => void
   onOpen: (entityId: string) => void
+  onEdit: (entityId: string) => void
 }
 
 export function AreaSection({
@@ -24,7 +26,8 @@ export function AreaSection({
   onRemove,
   onReorder,
   onAdd,
-  onOpen
+  onOpen,
+  onEdit
 }: Props): ReactNode {
   const [dragId, setDragId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
@@ -60,11 +63,34 @@ export function AreaSection({
     onReorder(group.key, ids)
   }
 
+  // Read-only readings move into the room header: they are status, not controls.
+  // While editing they sit in their own row above the controls.
+  const isReading = (domain: string): boolean =>
+    domain === 'sensor' || domain === 'binary_sensor'
+  const readings = group.items.filter((item) => isReading(item.meta.domain))
+  const controls = group.items.filter((item) => !isReading(item.meta.domain))
+  const showStrip = !editMode
+  const shownReadings = showStrip ? readings.slice(0, 3) : []
+  const extraReadings = readings.length - shownReadings.length
+
   return (
     <section className="area">
       <div className="area__sentinel" ref={sentinelRef} />
       <div className={`area__header ${stuck ? 'is-stuck' : ''}`} ref={headerRef}>
         <h2 className="area__title">{group.name}</h2>
+        {shownReadings.length > 0 && (
+          <div className="area__sensors">
+            {shownReadings.map(({ meta, state }) => (
+              <span className="area__sensor" key={meta.entity_id} title={meta.name}>
+                <Icon name={iconFor(meta.domain, str(state.attributes.device_class))} size={12} />
+                {formatValue(state)}
+              </span>
+            ))}
+            {extraReadings > 0 && (
+              <span className="area__sensor area__sensor--more">+{extraReadings}</span>
+            )}
+          </div>
+        )}
         {editMode && (
           <button className="area__add" onClick={() => onAdd(group.key)} title="添加实体">
             <Icon name="plus" size={13} strokeWidth={2.2} />
@@ -72,8 +98,53 @@ export function AreaSection({
           </button>
         )}
       </div>
-      <div className="tiles">
-        {group.items.map(({ meta, state }) => (
+      {editMode && readings.length > 0 && (
+        <div className="tiles tiles--readings">
+          {readings.map(({ meta, state }) => (
+            <div
+              key={meta.entity_id}
+              className={[
+                'tile-slot',
+                overId === meta.entity_id && dragId && dragId !== meta.entity_id ? 'is-over' : ''
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onDragOver={() => setOverId(meta.entity_id)}
+              onDragLeave={() => setOverId((current) => (current === meta.entity_id ? null : current))}
+            >
+              {theme === 'macos' ? (
+                <MacTile
+                  compact
+                  item={{ meta, state }}
+                  editMode={editMode}
+                  dragging={dragId === meta.entity_id}
+                  callService={callService}
+                  onOpen={onOpen}
+                  onEdit={onEdit}
+                  onRemove={onRemove}
+                  onDragStart={(entityId) => setDragId(entityId)}
+                  onDropOn={handleDrop}
+                />
+              ) : (
+                <Tile
+                  meta={meta}
+                  state={state}
+                  editMode={editMode}
+                  dragging={dragId === meta.entity_id}
+                  callService={callService}
+                  onEdit={onEdit}
+                  onRemove={onRemove}
+                  onDragStart={(entityId) => setDragId(entityId)}
+                  onDropOn={handleDrop}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {controls.length > 0 && (
+        <div className="tiles">
+          {controls.map(({ meta, state }) => (
           <div
             key={meta.entity_id}
             className={[
@@ -93,6 +164,7 @@ export function AreaSection({
                 dragging={dragId === meta.entity_id}
                 callService={callService}
                 onOpen={onOpen}
+                onEdit={onEdit}
                 onRemove={onRemove}
                 onDragStart={(entityId) => setDragId(entityId)}
                 onDropOn={handleDrop}
@@ -104,14 +176,16 @@ export function AreaSection({
                 editMode={editMode}
                 dragging={dragId === meta.entity_id}
                 callService={callService}
+                onEdit={onEdit}
                 onRemove={onRemove}
                 onDragStart={(entityId) => setDragId(entityId)}
                 onDropOn={handleDrop}
               />
             )}
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   )
 }

@@ -96,15 +96,24 @@ export function buildGroups(
 ): GroupedArea[] {
   const visible = computeVisible(meta, entities, dashboard, overviewIds)
   const buckets = new Map<string, EntityItem[]>()
+  const nameOverrides = dashboard.names ?? {}
+  const areaOverrides = dashboard.areas ?? {}
 
   for (const item of Object.values(meta)) {
     if (!visible.has(item.entity_id)) continue
     const state = entities[item.entity_id]
     if (!state) continue
-    const key = item.areaId ?? UNASSIGNED_KEY
+
+    // Panel-level overrides win over what Home Assistant reports.
+    const local: EntityMeta = {
+      ...item,
+      name: nameOverrides[item.entity_id] ?? item.name,
+      areaId: areaOverrides[item.entity_id] ?? item.areaId
+    }
+    const key = local.areaId ?? UNASSIGNED_KEY
     const list = buckets.get(key)
-    if (list) list.push({ meta: item, state })
-    else buckets.set(key, [{ meta: item, state }])
+    if (list) list.push({ meta: local, state })
+    else buckets.set(key, [{ meta: local, state }])
   }
 
   const groups: GroupedArea[] = []
