@@ -90,9 +90,10 @@ function createTray(): void {
   const image = nativeImage.createFromPath(resourcePath('tray.png'))
   tray = new Tray(image.isEmpty() ? nativeImage.createEmpty() : image)
   tray.setToolTip('HA Ctrl')
-  tray.on('click', () => togglePanel())
-  tray.on('right-click', () => {
-    const menu = Menu.buildFromTemplate([
+
+  // A shell-managed context menu survives focus changes that killed menu.popup().
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
       { label: '打开面板', click: () => showPanel() },
       { label: '重新连接', click: () => ha.restart() },
       { type: 'separator' },
@@ -105,7 +106,19 @@ function createTray(): void {
       { type: 'separator' },
       { label: '退出', click: () => app.quit() }
     ])
-    menu.popup()
+  )
+
+  let menuOpenedAt = 0
+
+  tray.on('right-click', () => {
+    menuOpenedAt = Date.now()
+  })
+
+  tray.on('click', () => {
+    // Some tray bars (MyDockFinder among them) report a right click as a left
+    // click too; opening the panel there would steal focus and dismiss the menu.
+    if (Date.now() - menuOpenedAt < 800) return
+    togglePanel()
   })
 }
 
