@@ -46,8 +46,8 @@ let lastError: string | null = null
 const ha = new HAClient()
 
 function resourcePath(name: string): string {
-  const base = app.isPackaged ? process.resourcesPath : join(__dirname, '../../resources')
-  return join(base, name)
+  // Works both in dev (out/main → project/resources) and packaged (app.asar/out/main → app.asar/resources).
+  return join(__dirname, '../../resources', name)
 }
 
 function broadcast(channel: string, payload: unknown): void {
