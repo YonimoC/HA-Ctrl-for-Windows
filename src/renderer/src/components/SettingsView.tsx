@@ -54,87 +54,91 @@ export function SettingsView(): ReactNode {
   }
 
   const link = tokenPageUrl(home.config.url)
-  const statusText = STATUS_LABEL[home.status] ?? home.status
 
   return (
     <form className="settings" onSubmit={submit}>
-      <div className="settings__status">
+      <div className="status-line">
         <span className={`status-dot status-${home.status}`} />
-        <span>{statusText}</span>
-        {home.error && <span className="settings__error">{home.error}</span>}
+        <span>{STATUS_LABEL[home.status] ?? home.status}</span>
+        {home.error && <span className="status-line__error">{home.error}</span>}
       </div>
 
-      <div className="field">
-        <span className="field__label">界面风格</span>
-        <div className="segmented">
-          <button
-            type="button"
-            className={home.ui.theme === 'windows' ? 'is-active' : ''}
-            onClick={() => home.updateUi({ theme: 'windows' })}
-          >
-            Windows
-          </button>
-          <button
-            type="button"
-            className={home.ui.theme === 'macos' ? 'is-active' : ''}
-            onClick={() => home.updateUi({ theme: 'macos' })}
-          >
-            macOS
-          </button>
+      <section className="card">
+        <div className="card__row">
+          <span className="card__row-label">界面风格</span>
+          <div className="segmented segmented--compact">
+            <button
+              type="button"
+              className={home.ui.theme === 'windows' ? 'is-active' : ''}
+              onClick={() => home.updateUi({ theme: 'windows' })}
+            >
+              Windows
+            </button>
+            <button
+              type="button"
+              className={home.ui.theme === 'macos' ? 'is-active' : ''}
+              onClick={() => home.updateUi({ theme: 'macos' })}
+            >
+              macOS
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <label className="field">
-        <span className="field__label">服务器地址</span>
-        <input
-          className="field__input"
-          value={url}
-          onChange={(event) => setUrl(event.target.value)}
-          placeholder="http://homeassistant.local:8123"
-          spellCheck={false}
-          autoCapitalize="off"
-          autoCorrect="off"
-        />
-      </label>
+      <section className="card">
+        <h3 className="card__title">连接</h3>
 
-      <label className="field">
-        <span className="field__label">长期访问令牌</span>
-        <input
-          className="field__input"
-          type="password"
-          value={token}
-          onChange={(event) => setToken(event.target.value)}
-          placeholder={home.config.hasToken ? '已保存，留空则不修改' : '粘贴长期访问令牌'}
-          spellCheck={false}
-        />
-      </label>
+        <label className="field">
+          <span className="field__label">服务器地址</span>
+          <input
+            className="field__input"
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+            placeholder="http://homeassistant.local:8123"
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
+          />
+        </label>
 
-      <p className="hint">
-        令牌在 Home Assistant 的「个人资料 → 安全 → 长期访问令牌」页面创建。
-        {link && (
-          <>
-            {' '}
-            <a href={link} target="_blank" rel="noreferrer">
-              打开令牌页面
-            </a>
-          </>
-        )}
-      </p>
+        <label className="field">
+          <span className="field__label">长期访问令牌</span>
+          <input
+            className="field__input"
+            type="password"
+            value={token}
+            onChange={(event) => setToken(event.target.value)}
+            placeholder={home.config.hasToken ? '已保存，留空则不修改' : '粘贴长期访问令牌'}
+            spellCheck={false}
+          />
+        </label>
 
-      {message && <div className="settings__message">{message}</div>}
+        <div className="card__actions">
+          <button className="primary-btn" type="submit" disabled={busy}>
+            {busy ? '保存中…' : '保存并连接'}
+          </button>
+          {message && <span className="card__message">{message}</span>}
+        </div>
 
-      <div className="settings__actions">
-        <button className="primary-btn" type="submit" disabled={busy}>
-          {busy ? '保存中…' : '保存并连接'}
-        </button>
-      </div>
+        <p className="hint">
+          在 Home Assistant 的「个人资料 → 安全 → 长期访问令牌」里创建。
+          {link && (
+            <>
+              {' '}
+              <a href={link} target="_blank" rel="noreferrer">
+                打开令牌页面
+              </a>
+            </>
+          )}
+        </p>
+      </section>
 
       <div className="settings__footer">
         <button type="button" className="link-btn" onClick={home.refresh}>
           重新连接
         </button>
         <span className="sep">·</span>
-        <span>点击托盘图标或按 Ctrl+Alt+H 打开面板</span>
+        <span>Ctrl + Alt + H 打开面板</span>
       </div>
     </form>
   )

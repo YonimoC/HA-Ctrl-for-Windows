@@ -6,7 +6,7 @@ import { lastClickPoint } from './cursor-tracker'
 
 export const PANEL_WIDTH = 380
 export const PANEL_MIN_HEIGHT = 180
-export const PANEL_MAX_HEIGHT = 640
+export const PANEL_MAX_HEIGHT = 470
 
 const ANCHOR_GAP = 6
 
@@ -54,6 +54,18 @@ export function createPanelWindow(theme: UiTheme): BrowserWindow {
   if (glass) options.backgroundMaterial = 'acrylic'
 
   const win = new BrowserWindow(options)
+
+  // Chromium remembers per-origin zoom in the profile; an old experiment could
+  // leave the panel stuck at a non-1.0 zoom, so reset it explicitly.
+  const resetZoom = (): void => win.webContents.setZoomFactor(1)
+  resetZoom()
+  win.webContents.on('did-finish-load', resetZoom)
+
+  if (glass) {
+    // Belt and braces: the constructor option alone has been seen to miss.
+    win.setBackgroundMaterial('acrylic')
+    win.webContents.on('did-finish-load', () => win.setBackgroundMaterial('acrylic'))
+  }
 
   win.setAlwaysOnTop(true, 'floating')
   win.setMenuBarVisibility(false)

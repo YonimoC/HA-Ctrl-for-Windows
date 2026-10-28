@@ -13,6 +13,11 @@
   --accent-soft: rgba(10, 132, 255, 0.22);
   --danger: #ff3b30;
   --slider-track: rgba(0, 0, 0, 0.14);
+  --area-header-bg: rgba(247, 247, 249, 0.92);
+  --card-bg: rgba(255, 255, 255, 0.72);
+  --card-hairline: rgba(0, 0, 0, 0.06);
+  --field-bg: rgba(120, 120, 128, 0.12);
+  --field-bg-focus: rgba(255, 255, 255, 0.96);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,6 +35,11 @@
     --accent: #0a84ff;
     --accent-soft: rgba(10, 132, 255, 0.3);
     --slider-track: rgba(255, 255, 255, 0.2);
+    --area-header-bg: rgba(28, 28, 30, 0.92);
+    --card-bg: rgba(255, 255, 255, 0.06);
+    --card-hairline: rgba(255, 255, 255, 0.07);
+    --field-bg: rgba(255, 255, 255, 0.08);
+    --field-bg-focus: rgba(255, 255, 255, 0.14);
   }
 }
 
@@ -51,7 +61,6 @@ body {
     system-ui, "Microsoft YaHei UI", sans-serif;
   font-size: 13px;
   color: var(--fg);
-  -webkit-font-smoothing: antialiased;
   user-select: none;
   cursor: default;
 }
@@ -89,9 +98,9 @@ button {
 
 .header__title {
   margin: 0;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
-  letter-spacing: 0.2px;
+  letter-spacing: -0.01em;
 }
 
 .header__actions {
@@ -211,21 +220,50 @@ button {
 /* ---------- areas & tiles ---------- */
 
 .area {
-  margin-top: 10px;
+  margin-top: 14px;
+}
+
+.area__sentinel {
+  height: 1px;
+  margin-bottom: -1px;
 }
 
 .area__header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
   display: flex;
   align-items: center;
-  padding: 4px 4px 8px;
+  margin: 0 -12px;
+  padding: 8px 16px 10px;
+  background: transparent;
+  pointer-events: none;
 }
 
+.area__header .area__add {
+  pointer-events: auto;
+}
+
+/* While content slides underneath, the room name lifts into a floating pill
+   instead of a full-width bar — nothing square ever sits on the glass. */
 .area__title {
   margin: 0;
-  font-size: 12.5px;
-  font-weight: 600;
+  padding: 3px 0;
+  font-size: 14px;
+  font-weight: 650;
   color: var(--fg-2);
-  letter-spacing: 0.3px;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  transition: background 0.18s ease, color 0.18s ease, padding 0.18s ease,
+    margin 0.18s ease, box-shadow 0.18s ease;
+}
+
+.area__header.is-stuck .area__title {
+  margin-left: -14px;
+  padding: 6px 14px;
+  color: var(--fg);
+  background: var(--area-header-bg);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.13), inset 0 0 0 0.5px rgba(0, 0, 0, 0.05);
 }
 
 .area__add {
@@ -327,7 +365,7 @@ button {
 .tile__name {
   margin-top: auto;
   padding-top: 10px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
@@ -626,26 +664,30 @@ button {
 
 .empty h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .empty p {
   margin: 6px 0 0;
-  font-size: 12px;
-  line-height: 1.55;
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--fg-2);
-  max-width: 255px;
+  max-width: 265px;
+}
+
+.empty .primary-btn {
+  margin-top: 16px;
 }
 
 .primary-btn {
-  margin-top: 16px;
+  margin-top: 0;
   border: 0;
-  border-radius: 9px;
-  padding: 7px 18px;
+  border-radius: 10px;
+  padding: 8px 20px;
   background: var(--accent);
   color: #fff;
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -661,12 +703,12 @@ button {
 
 .banner {
   margin: 8px 4px 0;
-  padding: 7px 10px;
-  border-radius: 8px;
+  padding: 8px 11px;
+  border-radius: 9px;
   background: rgba(255, 159, 10, 0.14);
   color: #a86600;
-  font-size: 11.5px;
-  line-height: 1.45;
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 
 /* ---------- settings ---------- */
@@ -674,24 +716,77 @@ button {
 .settings {
   display: flex;
   flex-direction: column;
-  gap: 13px;
-  padding: 14px 14px 18px;
+  gap: 12px;
+  padding: 14px 12px 16px;
 }
 
-.settings__status {
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--card-bg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 0 0 0.5px var(--card-hairline);
+}
+
+.card__title {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg-2);
+  letter-spacing: 0.02em;
+}
+
+.card__actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 7px;
-  font-size: 12px;
+  gap: 10px;
+}
+
+.card__actions .primary-btn {
+  margin-top: 0;
+}
+
+.card__message {
+  font-size: 12.5px;
   color: var(--fg-2);
 }
 
-.settings__error {
+.status-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 2px 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-2);
+}
+
+.status-line__error {
   flex-basis: 100%;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
+  font-weight: 400;
   color: var(--danger);
+}
+
+.card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card__row-label {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.segmented--compact {
+  flex: 0 0 auto;
+  width: 150px;
 }
 
 .field {
@@ -701,34 +796,36 @@ button {
 }
 
 .field__label {
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 500;
   color: var(--fg-2);
 }
 
 .field__input {
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 8px;
-  border: 0.5px solid var(--border);
-  background: var(--input-bg);
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--field-bg);
   color: var(--fg);
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 13.5px;
   outline: none;
   user-select: text;
+  box-shadow: inset 0 0 0 0.5px var(--card-hairline);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .field__input:focus {
-  border-color: var(--accent);
+  background: var(--field-bg-focus);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .hint {
   margin: 0;
-  font-size: 11px;
+  font-size: 12.5px;
   line-height: 1.6;
-  color: var(--fg-3);
+  color: var(--fg-2);
 }
 
 .hint a {
@@ -740,26 +837,13 @@ button {
   text-decoration: underline;
 }
 
-.settings__message {
-  font-size: 11.5px;
-  color: var(--fg-2);
-}
-
-.settings__actions {
-  display: flex;
-}
-
-.settings__actions .primary-btn {
-  margin-top: 0;
-}
-
 .settings__footer {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 4px;
-  font-size: 11px;
+  padding: 0 4px;
+  font-size: 12px;
   color: var(--fg-3);
 }
 
@@ -768,7 +852,7 @@ button {
   border: 0;
   background: transparent;
   color: var(--accent);
-  font-size: 11px;
+  font-size: 12px;
   padding: 0;
   cursor: pointer;
 }
@@ -780,56 +864,64 @@ button {
 /* ---------- add sheet ---------- */
 
 .add-sheet {
-  padding: 10px 8px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 12px 14px;
 }
 
 .add-search {
   position: relative;
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
 }
 
 .add-search__icon {
   position: absolute;
-  left: 9px;
+  left: 11px;
   color: var(--fg-3);
   pointer-events: none;
 }
 
 .add-search__input {
   width: 100%;
-  height: 30px;
-  padding: 0 10px 0 29px;
-  border-radius: 8px;
-  border: 0.5px solid var(--border);
-  background: var(--input-bg);
+  height: 36px;
+  padding: 0 12px 0 33px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--field-bg);
   color: var(--fg);
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 13.5px;
   outline: none;
   user-select: text;
+  box-shadow: inset 0 0 0 0.5px var(--card-hairline);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .add-search__input:focus {
-  border-color: var(--accent);
+  background: var(--field-bg-focus);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .add-list {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--card-bg);
+  box-shadow: inset 0 0 0 0.5px var(--card-hairline);
 }
 
 .add-item {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   width: 100%;
-  padding: 7px 8px;
+  padding: 8px 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   color: var(--fg);
   font-family: inherit;
@@ -860,7 +952,7 @@ button {
 }
 
 .add-item__name {
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -868,7 +960,7 @@ button {
 }
 
 .add-item__id {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--fg-3);
   white-space: nowrap;
   overflow: hidden;
@@ -878,15 +970,15 @@ button {
 .add-item__area {
   margin-left: auto;
   flex: none;
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--fg-3);
   padding-left: 8px;
 }
 
 .add-empty {
   padding: 30px 18px;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.65;
   color: var(--fg-3);
   text-align: center;
 }
@@ -898,7 +990,7 @@ button {
    ========================================================= */
 
 .panel.theme-macos {
-  --bg: rgba(250, 250, 252, 0.22);
+  --bg: rgba(250, 250, 252, 0.46);
   --border: transparent;
   --tile: rgba(255, 255, 255, 0.42);
   --tile-hover: rgba(255, 255, 255, 0.62);
@@ -907,8 +999,16 @@ button {
   --scroll: rgba(60, 60, 67, 0.22);
   --mac-tile-on: rgba(255, 255, 255, 0.95);
   --mac-tile-on-fg: #1c1c1e;
-  --mac-tile-off: rgba(120, 120, 128, 0.26);
-  --mac-tile-off-fg: rgba(40, 40, 44, 0.78);
+  --mac-tile-off: rgba(120, 120, 128, 0.15);
+  --mac-tile-off-hover: rgba(120, 120, 128, 0.22);
+  --mac-tile-off-fg: rgba(40, 40, 44, 0.66);
+  --mac-tile-hairline: rgba(0, 0, 0, 0.04);
+  --mac-slider-fill: #0a84ff;
+  --area-header-bg: rgba(250, 250, 252, 0.92);
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --card-hairline: rgba(0, 0, 0, 0.05);
+  --field-bg: rgba(120, 120, 128, 0.17);
+  --field-bg-focus: rgba(255, 255, 255, 0.9);
   --mac-icon-off: rgba(60, 60, 67, 0.42);
   --mac-icon-sensor-on: #0a84ff;
   --mac-card-bg: rgba(250, 250, 252, 0.97);
@@ -919,7 +1019,7 @@ button {
 
 @media (prefers-color-scheme: dark) {
   .panel.theme-macos {
-    --bg: rgba(26, 26, 28, 0.42);
+    --bg: rgba(26, 26, 28, 0.56);
     --tile: rgba(255, 255, 255, 0.1);
     --tile-hover: rgba(255, 255, 255, 0.18);
     --input-bg: rgba(255, 255, 255, 0.1);
@@ -927,8 +1027,16 @@ button {
     --scroll: rgba(255, 255, 255, 0.24);
     --mac-tile-on: rgba(255, 255, 255, 0.9);
     --mac-tile-on-fg: #1c1c1e;
-    --mac-tile-off: rgba(255, 255, 255, 0.1);
-    --mac-tile-off-fg: rgba(255, 255, 255, 0.72);
+    --mac-tile-off: rgba(255, 255, 255, 0.07);
+    --mac-tile-off-hover: rgba(255, 255, 255, 0.12);
+    --mac-tile-off-fg: rgba(255, 255, 255, 0.66);
+    --mac-tile-hairline: rgba(255, 255, 255, 0.05);
+    --mac-slider-fill: #0a84ff;
+    --area-header-bg: rgba(30, 30, 32, 0.9);
+    --card-bg: rgba(255, 255, 255, 0.08);
+    --card-hairline: rgba(255, 255, 255, 0.06);
+    --field-bg: rgba(255, 255, 255, 0.1);
+    --field-bg-focus: rgba(255, 255, 255, 0.16);
     --mac-icon-off: rgba(255, 255, 255, 0.44);
     --mac-icon-sensor-on: #64b5ff;
     --mac-card-bg: rgba(44, 44, 46, 0.97);
@@ -950,18 +1058,19 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 74px;
-  padding: 10px 12px;
-  border-radius: 13px;
+  height: 78px;
+  padding: 10px 12px 10px 14px;
+  border-radius: 12px;
   background: var(--mac-tile-off);
   color: var(--mac-tile-off-fg);
   cursor: pointer;
   overflow: hidden;
-  transition: background 0.18s ease, transform 0.1s ease;
+  box-shadow: inset 0 0 0 0.5px var(--mac-tile-hairline);
+  transition: background 0.16s ease, box-shadow 0.16s ease;
 }
 
 .mac-tile:hover {
-  filter: brightness(1.04);
+  background: var(--mac-tile-off-hover);
 }
 
 .mac-tile:active {
@@ -971,6 +1080,19 @@ button {
 .mac-tile.is-on {
   background: var(--mac-tile-on);
   color: var(--mac-tile-on-fg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+}
+
+/* A thin hue spine marks what is currently on — the panel's one loud gesture. */
+.mac-tile.is-on::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15px;
+  bottom: 15px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--tile-hue);
 }
 
 .mac-tile.is-editing {
@@ -1032,7 +1154,7 @@ button {
 }
 
 .mac-tile__name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.25;
   white-space: nowrap;
@@ -1041,9 +1163,9 @@ button {
 }
 
 .mac-tile__state {
-  font-size: 11.5px;
-  line-height: 1.25;
-  opacity: 0.65;
+  font-size: 12px;
+  line-height: 1.3;
+  opacity: 0.7;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1149,8 +1271,9 @@ button {
 }
 
 .mac-detail__name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1158,7 +1281,7 @@ button {
 
 .mac-detail__state {
   margin-top: 1px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--fg-2);
 }
 
@@ -1237,9 +1360,10 @@ button {
 }
 
 .mac-detail__reading-value {
-  font-size: 30px;
+  font-size: 40px;
   font-weight: 300;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1248,19 +1372,42 @@ button {
   color: var(--fg-3);
 }
 
+.mac-slider-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 24px;
+}
+
+.mac-slider-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--tile);
+  overflow: hidden;
+}
+
+.mac-slider-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--mac-slider-fill);
+}
+
 .mac-slider {
   -webkit-appearance: none;
   appearance: none;
+  position: relative;
   width: 100%;
-  height: 22px;
+  height: 24px;
   background: transparent;
   cursor: pointer;
 }
 
 .mac-slider::-webkit-slider-runnable-track {
   height: 6px;
-  border-radius: 3px;
-  background: var(--tile);
+  background: transparent;
 }
 
 .mac-slider::-webkit-slider-thumb {
@@ -1272,6 +1419,40 @@ button {
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+}
+
+.mac-detail__segments {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--tile);
+}
+
+.mac-segment {
+  flex: 1;
+  border: 0;
+  border-radius: 7px;
+  padding: 6px 4px;
+  background: transparent;
+  color: var(--fg-2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mac-segment.is-active {
+  background: #fff;
+  color: #1c1c1e;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  .mac-segment.is-active {
+    background: rgba(255, 255, 255, 0.92);
+    color: #1c1c1e;
+  }
 }
 
 .theme-macos .tile--sensor.is-on {
@@ -1292,10 +1473,10 @@ button {
   flex: 1;
   border: 0;
   border-radius: 7px;
-  padding: 5px 8px;
+  padding: 6px 8px;
   background: transparent;
   color: var(--fg-2);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { EntityMeta, EntityState, ServiceCall } from '@shared/types'
 import { Icon, iconFor } from './Icons'
 import { num, str } from '../lib/util'
@@ -19,6 +19,7 @@ export interface MacTileProps {
 }
 
 function isOn(domain: string, state: EntityState): boolean {
+  if (domain === 'climate') return state.state !== 'off' && state.state !== 'unavailable'
   if (domain === 'cover') return state.state === 'open'
   return state.state === 'on'
 }
@@ -54,7 +55,7 @@ export function macTileState(item: EntityItem): string {
       const target = num(state.attributes.temperature)
       const mode = HVAC_LABELS[state.state] ?? state.state
       const value = current ?? target
-      return value === undefined ? mode : `${Math.round(value * 10) / 10}° · ${mode}`
+      return value === undefined ? mode : `${Math.round(value * 10) / 10}° ${mode}`
     }
     case 'cover':
       return on ? '已打开' : '已关闭'
@@ -67,6 +68,29 @@ export function macTileState(item: EntityItem): string {
       return formatValue(state)
     default:
       return on ? '开启' : '关闭'
+  }
+}
+
+function domainHue(domain: string): string {
+  switch (domain) {
+    case 'light':
+      return '#f5a300'
+    case 'climate':
+      return '#ff8a3d'
+    case 'fan':
+      return '#32ade6'
+    case 'cover':
+      return '#2fb457'
+    case 'scene':
+      return '#8a5cf6'
+    case 'script':
+    case 'automation':
+      return '#5e5ce6'
+    case 'sensor':
+    case 'binary_sensor':
+      return '#8e8e93'
+    default:
+      return '#0a84ff'
   }
 }
 
@@ -121,6 +145,7 @@ export function MacTile({
       ]
         .filter(Boolean)
         .join(' ')}
+      style={{ '--tile-hue': domainHue(meta.domain) } as CSSProperties}
       draggable={editMode}
       onDragStart={(event) => {
         if (!editMode) return

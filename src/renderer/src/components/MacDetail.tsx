@@ -33,6 +33,8 @@ function MacSlider({
   unit: string
   onChange: (value: number) => void
 }): ReactNode {
+  const percent = max > min ? ((value - min) / (max - min)) * 100 : 0
+
   return (
     <div className="mac-detail__group">
       <div className="mac-detail__rowhead">
@@ -42,16 +44,21 @@ function MacSlider({
           {unit}
         </span>
       </div>
-      <input
-        className="mac-slider"
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        aria-label={label}
-        onChange={(event) => onChange(Number(event.target.value))}
-      />
+      <div className="mac-slider-wrap">
+        <div className="mac-slider-track">
+          <div className="mac-slider-fill" style={{ width: `${clamp(percent, 0, 100)}%` }} />
+        </div>
+        <input
+          className="mac-slider"
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          aria-label={label}
+          onChange={(event) => onChange(Number(event.target.value))}
+        />
+      </div>
     </div>
   )
 }
@@ -205,11 +212,11 @@ function ClimateControls({ item, callService }: { item: EntityItem; callService:
           })
         }}
       />
-      <div className="mac-detail__chips">
+      <div className="mac-detail__segments">
         {visibleModes.map((entry) => (
           <button
             key={entry}
-            className={`chip ${entry === mode ? 'is-active' : ''}`}
+            className={`mac-segment ${entry === mode ? 'is-active' : ''}`}
             onClick={() =>
               void callService({
                 domain: 'climate',

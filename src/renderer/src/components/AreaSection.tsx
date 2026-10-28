@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { ServiceCall, UiTheme } from '@shared/types'
 import { Tile } from './Tiles'
 import { MacTile } from './MacTile'
@@ -28,6 +28,23 @@ export function AreaSection({
 }: Props): ReactNode {
   const [dragId, setDragId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
+  const [stuck, setStuck] = useState(false)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
+
+  // Only show the header backdrop while content is scrolling underneath it.
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    const header = headerRef.current
+    if (!sentinel || !header) return
+    const root = header.closest('.content')
+    const observer = new IntersectionObserver(
+      ([entry]) => setStuck(!entry.isIntersecting),
+      { root, threshold: 0 }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
 
   const handleDrop = (targetId: string): void => {
     const from = dragId
@@ -45,7 +62,8 @@ export function AreaSection({
 
   return (
     <section className="area">
-      <div className="area__header">
+      <div className="area__sentinel" ref={sentinelRef} />
+      <div className={`area__header ${stuck ? 'is-stuck' : ''}`} ref={headerRef}>
         <h2 className="area__title">{group.name}</h2>
         {editMode && (
           <button className="area__add" onClick={() => onAdd(group.key)} title="添加实体">
