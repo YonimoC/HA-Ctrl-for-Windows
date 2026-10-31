@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useHome } from '../home'
 import { buildGroups } from '../lib/grouping'
 import { AreaSection } from './AreaSection'
@@ -33,6 +34,9 @@ export function Dashboard({ editMode, onOpenSettings, onAdd }: Props): ReactNode
 
   const detailItem = useMemo(() => findItem(detailId), [detailId, groups])
   const editorItem = useMemo(() => findItem(editorId), [editorId, groups])
+
+  // Overlays live on the panel root, not inside the scrolling list.
+  const overlayHost = typeof document === 'undefined' ? null : document.querySelector('.panel')
 
   const remove = (entityId: string): void => {
     const order: Record<string, string[]> = {}
@@ -115,22 +119,28 @@ export function Dashboard({ editMode, onOpenSettings, onAdd }: Props): ReactNode
           />
         ))}
       </div>
-      {detailItem && home.ui.theme === 'macos' && (
-        <MacDetail
-          item={detailItem}
-          callService={home.callService}
-          onClose={() => setDetailId(null)}
-        />
-      )}
-      {editorItem && editMode && (
-        <TileEditor
-          item={editorItem}
-          areas={home.areas}
-          dashboard={home.dashboard}
-          onSave={home.updateDashboard}
-          onClose={() => setEditorId(null)}
-        />
-      )}
+      {overlayHost &&
+        createPortal(
+          <>
+            {detailItem && home.ui.theme === 'macos' && (
+              <MacDetail
+                item={detailItem}
+                callService={home.callService}
+                onClose={() => setDetailId(null)}
+              />
+            )}
+            {editorItem && editMode && (
+              <TileEditor
+                item={editorItem}
+                areas={home.areas}
+                dashboard={home.dashboard}
+                onSave={home.updateDashboard}
+                onClose={() => setEditorId(null)}
+              />
+            )}
+          </>,
+          overlayHost
+        )}
     </>
   )
 }
