@@ -67,6 +67,8 @@ export class HAClient extends EventEmitter {
   private stopped = true
   private attempt = 0
   private reconnectTimer: NodeJS.Timeout | null = null
+  private heartbeatTimer: NodeJS.Timeout | null = null
+  private lastMessageAt = 0
 
   configure(url: string, token: string): void {
     this.url = url.trim()
@@ -85,8 +87,24 @@ export class HAClient extends EventEmitter {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null
     }
+    this.stopHeartbeat()
     this.teardown()
     this.emitStatus('disconnected', null)
+  }
+
+  /** Drops the current socket and reconnects straight away (resume, manual retry). */
+  forceReconnect(): void {
+    if (this.stopped) {
+      this.start()
+      return
+    }
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = null
+    }
+    this.attempt = 0
+    this.teardown()
+    this.open()
   }
 
   restart(): void {
@@ -168,6 +186,7 @@ export class HAClient extends EventEmitter {
   private teardown(): void {
     const ws = this.ws
     this.ws = null
+    this.stopHeartbeat()
     this.rejectAllPending(new Error('连接已重置'))
     if (ws) {
       ws.removeAllListeners()
@@ -190,6 +209,8 @@ export class HAClient extends EventEmitter {
   }
 
   private handleMessage(raw: string): void {
+    this.lastMessageAt = Date.now()
+
     let msg: Record<string, unknown>
     try {
       msg = JSON.parse(raw)
@@ -205,11 +226,13 @@ export class HAClient extends EventEmitter {
       case 'auth_invalid':
         this.stopped = true
         this.emitStatus('error', '认证失败：访问令牌无效或已过期')
+        this.stopHeartbeat()
         this.teardown()
         break
 
       case 'auth_ok':
         this.attempt = 0
+        this.startHeartbeat()
         void this.onAuthenticated()
         break
 
@@ -224,6 +247,30 @@ export class HAClient extends EventEmitter {
       case 'ping':
         this.sendRaw({ id: msg.id, type: 'pong' })
         break
+    }
+  }
+
+  /**
+   * A half-open socket can look connected forever — TCP only notices when
+   * something is sent. Ping periodically and reconnect when nothing comes back.
+   */
+  private startHeartbeat(): void {
+    this.stopHeartbeat()
+    this.lastMessageAt = Date.now()
+    this.heartbeatTimer = setInterval(() => {
+      if (!this.isConnected()) return
+      if (Date.now() - this.lastMessageAt > 40_000) {
+        this.forceReconnect()
+        return
+      }
+      this.sendRaw({ id: this.nextId++, type: 'ping' })
+    }, 12_000)
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer)
+      this.heartbeatTimer = null
     }
   }
 
@@ -254,6 +301,8 @@ export class HAClient extends EventEmitter {
       this.emitStatus('connected', null)
     } catch (error) {
       this.emitStatus('error', `读取实体失败：${(error as Error).message}`)
+      // Home Assistant was probably still booting; retry instead of giving up.
+      if (!this.stopped) this.scheduleReconnect()
     }
   }
 

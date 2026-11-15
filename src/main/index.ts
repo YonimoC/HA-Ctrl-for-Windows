@@ -6,6 +6,7 @@ import {
   ipcMain,
   Menu,
   nativeImage,
+  powerMonitor,
   screen,
   Tray
 } from 'electron'
@@ -66,6 +67,9 @@ type Anchor = 'tray' | 'cursor'
 
 function showPanel(anchor: Anchor = 'tray'): void {
   if (!panel) return
+  // Opening the panel is a good moment to recover a connection that dropped
+  // while the machine was idle.
+  if (!ha.isConnected()) ha.forceReconnect()
   if (anchor === 'cursor' || !tray) positionPanelAtCursor(panel)
   else positionPanelForTray(panel, tray)
 
@@ -312,6 +316,17 @@ async function bootstrap(): Promise<void> {
   ha.on('status', (payload: { status: ConnectionStatus; error: string | null }) =>
     setStatus(payload.status, payload.error)
   )
+
+  // Sleep usually kills the socket without a close event.
+  powerMonitor.on('resume', () => ha.forceReconnect())
+  powerMonitor.on('unlock-screen', () => {
+    if (!ha.isConnected()) ha.forceReconnect()
+  })
+
+  // Windows scaling / resolution changed while the panel is open: keep it anchored.
+  screen.on('display-metrics-changed', () => {
+    if (panel?.isVisible()) repositionPanel(panel)
+  })
 
   const url = getServerUrl()
   const token = await getToken()
