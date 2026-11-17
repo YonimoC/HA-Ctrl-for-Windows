@@ -4,7 +4,7 @@ import type { EntityItem } from '../lib/grouping'
 import { formatValue } from '../lib/grouping'
 import { Icon, iconFor } from './Icons'
 import { clamp, num, str, strArray, temperatureUnit } from '../lib/util'
-import { HVAC_LABELS, HVAC_ORDER } from '../lib/hvac'
+import { HVAC_LABELS, HVAC_ORDER, FAN_LABELS } from '../lib/hvac'
 import { useDebouncedCall } from '../lib/useDebouncedCall'
 import { macTileState } from './MacTile'
 
@@ -181,6 +181,8 @@ function ClimateControls({ item, callService }: { item: EntityItem; callService:
   const step = num(attributes.target_temp_step) ?? 0.5
   const modes = strArray(attributes.hvac_modes)
   const visibleModes = HVAC_ORDER.filter((entry) => modes.includes(entry)).slice(0, 5)
+  const fanModes = strArray(attributes.fan_modes)
+  const fanMode = str(attributes.fan_mode)
 
   const [pendingTarget, setPendingTarget] = useServerSyncedValue(serverTarget)
   const debounced = useDebouncedCall(callService)
@@ -230,6 +232,35 @@ function ClimateControls({ item, callService }: { item: EntityItem; callService:
           </button>
         ))}
       </div>
+
+      {fanModes.length > 1 && (
+        <div className="mac-detail__group">
+          <div className="mac-detail__rowhead">
+            <span>风速</span>
+            <span className="mac-detail__value">
+              {fanMode ? (FAN_LABELS[fanMode] ?? fanMode) : '—'}
+            </span>
+          </div>
+          <div className="mac-detail__segments mac-detail__segments--wrap">
+            {fanModes.map((entry) => (
+              <button
+                key={entry}
+                className={`mac-segment ${entry === fanMode ? 'is-active' : ''}`}
+                onClick={() =>
+                  void callService({
+                    domain: 'climate',
+                    service: 'set_fan_mode',
+                    entityId: meta.entity_id,
+                    data: { fan_mode: entry }
+                  })
+                }
+              >
+                {FAN_LABELS[entry] ?? entry}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </>
   )
 }
